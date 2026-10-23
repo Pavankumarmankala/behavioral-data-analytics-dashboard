@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated data & outputs (regenerable via src/ scripts)
+data/raw/*.csv
+outputs/charts/*.png
+outputs/tables/*.csv
+outputs/tables/*.txt
+!**/.gitkeep
+
+# Power BI temp files
+*.pbix
+~*.pbix

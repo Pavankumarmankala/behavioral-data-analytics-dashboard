@@ -1,0 +1,101 @@
+// ============================================================
+// Behavioral Data Analytics Dashboard — Power BI DAX Measures
+// ============================================================
+// Data model:
+//   Fact table:  behavioral_data (one row per session record)
+//     Columns: record_id, user_id, timestamp, cohort,
+//              experimental_group, user_segment,
+//              session_duration_min, engagement_events,
+//              pages_viewed, clicks, feature_usage_count,
+//              primary_feature, session_score, task_completed
+//   The Python KPI scripts in src/ produce the same KPIs as CSVs
+//   in outputs/tables/ for validation without Power BI.
+//
+// No .pbix file is included in this repo; these measures plus the
+// data-model description in README.md fully define the dashboard.
+// ============================================================
+
+// --- Volume ---
+Total Sessions =
+COUNTROWS ( behavioral_data )
+
+Unique Users =
+DISTINCTCOUNT ( behavioral_data[user_id] )
+
+Sessions per User =
+DIVIDE ( [Total Sessions], [Unique Users] )
+
+// --- Engagement ---
+Total Engagement Events =
+SUM ( behavioral_data[engagement_events] )
+
+Avg Engagement Events =
+AVERAGE ( behavioral_data[engagement_events] )
+
+Total Pages Viewed =
+SUM ( behavioral_data[pages_viewed] )
+
+Total Clicks =
+SUM ( behavioral_data[clicks] )
+
+Avg Session Duration (min) =
+AVERAGE ( behavioral_data[session_duration_min] )
+
+Median Session Duration (min) =
+MEDIAN ( behavioral_data[session_duration_min] )
+
+Avg Feature Usage Count =
+AVERAGE ( behavioral_data[feature_usage_count] )
+
+Avg Session Score =
+AVERAGE ( behavioral_data[session_score] )
+
+// --- Completion / Conversion ---
+Completed Sessions =
+CALCULATE ( [Total Sessions], behavioral_data[task_completed] = 1 )
+
+Completion Rate =
+DIVIDE ( [Completed Sessions], [Total Sessions] )
+
+Completion Rate % =
+[Completion Rate] * 100
+
+// --- Group comparison (Control vs Intervention) ---
+Sessions - Control =
+CALCULATE ( [Total Sessions], behavioral_data[experimental_group] = "Control" )
+
+Sessions - Intervention =
+CALCULATE ( [Total Sessions], behavioral_data[experimental_group] = "Intervention" )
+
+Completion Rate - Control =
+CALCULATE ( [Completion Rate], behavioral_data[experimental_group] = "Control" )
+
+Completion Rate - Intervention =
+CALCULATE ( [Completion Rate], behavioral_data[experimental_group] = "Intervention" )
+
+Completion Rate Difference (pp) =
+( [Completion Rate - Intervention] - [Completion Rate - Control] ) * 100
+
+Avg Duration - Control =
+CALCULATE ( [Avg Session Duration (min)], behavioral_data[experimental_group] = "Control" )
+
+Avg Duration - Intervention =
+CALCULATE ( [Avg Session Duration (min)], behavioral_data[experimental_group] = "Intervention" )
+
+// --- Time intelligence (requires a Date table marked as date table,
+//     related to behavioral_data[timestamp]) ---
+Sessions MoM Change =
+VAR CurrentMonth = [Total Sessions]
+VAR PrevMonth =
+    CALCULATE ( [Total Sessions], DATEADD ( 'Date'[Date], -1, MONTH ) )
+RETURN
+    DIVIDE ( CurrentMonth - PrevMonth, PrevMonth )
+
+Sessions YTD =
+TOTALYTD ( [Total Sessions], 'Date'[Date] )
+
+Sessions - 3 Month Rolling Avg =
+AVERAGEX (
+    DATESINPERIOD ( 'Date'[Date], MAX ( 'Date'[Date] ), -3, MONTH ),
+    [Total Sessions]
+)
